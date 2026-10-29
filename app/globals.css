@@ -1,0 +1,342 @@
+@import "tailwindcss";
+
+/* ---------- Testly: Palette ---------- */
+:root {
+  --ink: #0b0b0a;
+  --graphit: #141311;
+  --stein: #5e584f;
+  --creme: #f4f1ea;
+  --papier: #faf8f3;
+  --nebel: #eeeae2;
+  --amber: #e2b36f;
+  --bronze: #8a6a3e;
+
+  --shadow-float: 0 20px 50px rgba(60, 45, 25, 0.1);
+  --radius-card: 24px;
+  --radius-panel: 28px;
+}
+
+/* Dunkel ist Standard */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --surface: var(--ink);
+  --surface-alt: var(--graphit);
+  --surface-raised: var(--graphit);
+  --fg: var(--papier);
+  --fg-muted: rgba(250, 248, 243, 0.66);
+  --accent: var(--amber);
+  --line: rgba(255, 255, 255, 0.12);
+  --chart-band: rgba(255, 255, 255, 0.08);
+  --chart-line: var(--papier);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --surface: var(--creme);
+  --surface-alt: var(--papier);
+  --surface-raised: #fff;
+  --fg: var(--graphit);
+  --fg-muted: var(--stein);
+  --accent: var(--bronze);
+  --line: var(--nebel);
+  --chart-band: var(--nebel);
+  --chart-line: var(--graphit);
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-surface-raised: var(--surface-raised);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-accent: var(--accent);
+  --color-line: var(--line);
+  --color-band: var(--chart-band);
+  --color-ink: var(--ink);
+  --color-graphit: var(--graphit);
+  --color-stein: var(--stein);
+  --color-creme: var(--creme);
+  --color-papier: var(--papier);
+  --color-nebel: var(--nebel);
+  --color-amber: var(--amber);
+  --color-bronze: var(--bronze);
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --radius-card: 24px;
+  --radius-panel: 28px;
+  --shadow-float: 0 20px 50px rgba(60, 45, 25, 0.1);
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 96px;
+}
+
+body {
+  background: var(--surface);
+  color: var(--fg);
+  font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 300;
+  font-size: 17px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+[data-theme="dark"] body,
+:root:not([data-theme]) body {
+  background-image: radial-gradient(1200px 600px at 50% -10%, rgba(255, 255, 255, 0.05), transparent 70%);
+  background-attachment: fixed;
+}
+
+/* ---------- Typo ---------- */
+.t-kicker {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  color: var(--accent);
+}
+.t-headline {
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+}
+.t-title {
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.t-body {
+  font-size: 17px;
+  font-weight: 300;
+}
+.t-small {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--fg-muted);
+}
+.t-metric {
+  font-size: clamp(64px, 8vw, 96px);
+  font-weight: 200;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.t-metric sup {
+  font-size: 0.4em;
+  font-weight: 300;
+  letter-spacing: 0;
+  margin-left: 0.12em;
+  vertical-align: top;
+  position: relative;
+  top: 0.15em;
+  color: var(--fg-muted);
+}
+
+/* ---------- Flächen ---------- */
+.card {
+  background: var(--surface-alt);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 24px;
+}
+.panel {
+  background: var(--surface-alt);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  padding: 24px;
+}
+[data-theme="light"] .card,
+[data-theme="light"] .panel {
+  background: var(--surface-raised);
+}
+
+/* Glas nur auf Dunkel */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 16px;
+}
+[data-theme="light"] .glass {
+  background: var(--surface-raised);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-color: var(--line);
+}
+
+.nav-pill {
+  border-radius: 9999px;
+  box-shadow: var(--shadow-float);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9999px;
+  border: 1px solid var(--line);
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--fg-muted);
+}
+
+.btn-pill {
+  border-radius: 9999px;
+  border: 1px solid var(--line);
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--fg);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.btn-pill:hover,
+.btn-pill:focus-visible {
+  border-color: var(--accent);
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.btn-pill:disabled {
+  opacity: 0.35;
+  cursor: default;
+  border-color: var(--line);
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.nav-link {
+  position: relative;
+  padding-bottom: 2px;
+}
+.nav-link.is-active {
+  color: var(--fg);
+}
+.nav-link.is-active::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: -3px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* ---------- Kalender ---------- */
+.cal-day {
+  display: flex;
+  min-height: 62px;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 6px 2px;
+  background: transparent;
+  color: var(--fg);
+}
+@media (min-width: 640px) {
+  .cal-day {
+    min-height: 92px;
+    padding: 8px 4px;
+  }
+}
+.cal-num {
+  display: inline-flex;
+  min-width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.cal-num.cal-today {
+  background: var(--accent);
+  color: var(--surface);
+  font-weight: 500;
+}
+.cal-active {
+  cursor: pointer;
+  background: var(--chart-band);
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+.cal-active .cal-num {
+  color: var(--fg);
+}
+.cal-active:hover {
+  border-color: var(--line);
+  transform: translateY(-1px);
+}
+.cal-day.is-selected {
+  border-color: var(--accent);
+}
+
+/* ---------- Bewegung ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(36px);
+    transition:
+      opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+  .pulse {
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ---------- Karte (Leaflet) ---------- */
+.route-map {
+  z-index: 0;
+  font-family: inherit;
+}
+:root:not([data-theme="light"]) .route-map .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.3);
+}
+.route-map .leaflet-control-zoom,
+.route-map .leaflet-bar a {
+  background: var(--surface-raised);
+  color: var(--fg);
+  border-color: var(--line);
+}
+.route-map .leaflet-control-zoom {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.route-map .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--fg-muted);
+  font-size: 11px;
+}
+.route-map .leaflet-control-attribution a {
+  color: var(--fg-muted);
+}
