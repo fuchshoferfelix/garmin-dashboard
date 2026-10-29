@@ -116,3 +116,8 @@ Mit `GET /api/garmin/status` prüfst du schnell, ob die Verbindung steht.
 ## Deployment
 
 Das Projekt lässt sich z. B. auf [Vercel](https://vercel.com) deployen. Hinterlege `GARMIN_PERSONAL_API_KEY` dort als Umgebungsvariable. Da das Dashboard persönliche Gesundheitsdaten zeigt, solltest du die Seite nicht öffentlich erreichbar machen, sondern z. B. mit einem Zugriffsschutz absichern.
+
+## Danksagung und Lizenzen
+
+- Kartendaten © [OpenStreetMap-Mitwirkende](https://www.openstreetmap.org/copyright), dargestellt mit [Leaflet](https://leafletjs.com).
+- Die Garmin-Daten gehören dir und werden nur über deinen eigenen Key abgerufen. Dieses Projekt ist nicht mit Garmin verbunden.
