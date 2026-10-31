@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strong Parser</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f6f5f2; --card: #fff; --text: #1c1b19; --muted: #6f6c66; --line: #e4e1db; --line-strong: #cfcbc3;
+    --field: #efede8; --accent: #d9480f; --accent-ink: #fff;
+    --bar: #cfcbc3; --ink-line: #1c1b19;
+    --heat-0: #ebe8e2; --heat-1: #f3b27a; --heat-2: #c2410c; --neutral-part: #dedbd4;
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141413; --card: #1c1c1a; --text: #ecebe7; --muted: #99968f; --line: #2c2b28; --line-strong: #43413c;
+      --field: #262523; --accent: #ff7a3d; --accent-ink: #1a1a18;
+      --bar: #45433e; --ink-line: #ecebe7;
+      --heat-0: #2b2a27; --heat-1: #b85f26; --heat-2: #ff8a4a; --neutral-part: #34322e;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  main { max-width: 960px; margin: 0 auto; padding: 28px 20px 80px; }
+  .topbar { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding-bottom: 14px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .brand { font-weight: 650; font-size: 15px; letter-spacing: -.01em; }
+  .brand span { color: var(--muted); font-weight: 400; margin-left: 10px; font-size: 13px; }
+  h1 { font-size: 28px; line-height: 1.2; letter-spacing: -.02em; font-weight: 650; margin: 40px 0 8px; }
+  h2 { font-size: 16px; font-weight: 650; letter-spacing: -.01em; margin: 0; }
+  .lead { color: var(--muted); max-width: 36em; margin: 0 0 28px; }
+  .tabnum { font-variant-numeric: tabular-nums; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .hidden { display: none !important; }
+
+  section { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; }
+  .head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 24px; margin-bottom: 18px; }
+  .head p { margin: 2px 0 0; color: var(--muted); font-size: 13px; max-width: 42em; }
+
+  /* Dropzone */
+  .drop { display: block; width: 100%; text-align: left; border: 1.5px dashed var(--line-strong); border-radius: var(--radius); background: transparent;
+          padding: 36px 24px; cursor: pointer; color: var(--muted); font: inherit; transition: border-color .15s, background .15s; }
+  .drop:hover, .drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, transparent); }
+  .drop strong { display: block; color: var(--text); font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+  .err { color: var(--accent); font-size: 13px; margin: 10px 0 0; min-height: 1.5em; }
+
+  /* Kennzahlen */
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); margin-bottom: 16px; }
+  .stat { padding: 16px 18px; border-left: 1px solid var(--line); min-width: 0; }
+  .stat:first-child { border-left: 0; }
+  .stat b { display: block; font-size: 22px; font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .stat span { color: var(--muted); font-size: 12.5px; }
+
+  /* Steuerelemente */
+  select, button, textarea { font: inherit; color: var(--text); }
+  select { appearance: none; -webkit-appearance: none; border: 1px solid var(--line-strong); background: var(--card); border-radius: 8px; padding: 7px 32px 7px 12px; cursor: pointer;
+           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%238a877f' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+           background-repeat: no-repeat; background-position: right 11px center; max-width: 100%; }
+  select:hover { border-color: var(--muted); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button { cursor: pointer; border: 1px solid var(--line-strong); background: var(--card); border-radius: 8px; padding: 8px 14px; font-weight: 500; transition: background .12s, border-color .12s; }
+  button:hover { border-color: var(--muted); }
+  button.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+  button.primary:hover { opacity: .88; }
+  button.link { border: 0; background: none; padding: 0; color: var(--muted); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+  button.link:hover { color: var(--text); }
+
+  .seg { display: inline-flex; background: var(--field); border-radius: 8px; padding: 2px; gap: 2px; }
+  .seg button { border: 0; background: transparent; padding: 5px 12px; font-size: 13px; color: var(--muted); border-radius: 6px; }
+  .seg button:hover { color: var(--text); }
+  .seg button[aria-pressed="true"] { background: var(--card); color: var(--text); box-shadow: 0 0 0 1px var(--line-strong); }
+
+  .opts { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; margin-bottom: 14px; }
+  .check { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; font-size: 14px; }
+  .check input { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
+  label.field { display: inline-flex; gap: 10px; align-items: center; color: var(--muted); font-size: 14px; }
+
+  textarea { width: 100%; height: 260px; resize: vertical; padding: 14px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--field); outline: 0;
+             font: 12.5px/1.55 ui-monospace, "SF Mono", Menlo, monospace; }
+  textarea:focus-visible { border-color: var(--accent); outline: 0; }
+  .bar { display: flex; gap: 10px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  .bar .muted { margin-left: auto; }
+
+  /* Charts */
+  .chart { position: relative; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart text { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .chart .grid { stroke: var(--line); stroke-width: 1; }
+  .chart .bar-r { fill: var(--bar); }
+  .chart .bar-r.recent { fill: var(--accent); }
+  .chart .bar-r.hot { fill: var(--text); }
+  .chart .hit { fill: transparent; }
+  .chart .guide { stroke: var(--line-strong); stroke-width: 1; }
+  .tip { position: fixed; z-index: 10; pointer-events: none; background: var(--text); color: var(--bg); font-size: 12.5px; padding: 6px 10px; border-radius: 6px;
+         white-space: nowrap; opacity: 0; transition: opacity .1s; font-variant-numeric: tabular-nums; }
+  .tip.show { opacity: 1; }
+
+  /* Muskel-Heatmap */
+  .musclegrid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+  .figures { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .figure figcaption { text-align: center; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+  .figure svg { max-height: 460px; }
+  .figure .m path { fill: var(--heat-0); stroke: var(--card); stroke-width: 1.6; stroke-linejoin: round; transition: fill .25s, opacity .15s; cursor: pointer; }
+  .figure .neutral { fill: var(--neutral-part); }
+  .figures[data-active] .m:not(.on) path { opacity: .35; }
+  .figures .m.on path { stroke: var(--text); stroke-width: 1.4; }
+  .legend { margin-top: 16px; }
+  .ramp { height: 8px; border-radius: 4px; background: linear-gradient(to right, var(--heat-0), var(--heat-1), var(--heat-2)); position: relative; }
+  .ramp .band { position: absolute; top: -3px; bottom: -3px; border: 1.5px solid var(--text); border-radius: 4px; }
+  .ticks { position: relative; height: 18px; color: var(--muted); font-size: 11.5px; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .ticks span { position: absolute; transform: translateX(-50%); }
+  .ticks span:first-child { transform: none; }
+  .detail { min-height: 96px; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; background: var(--field); font-size: 13.5px; }
+  .detail b { font-size: 15px; font-weight: 650; }
+  .detail ul { list-style: none; margin: 8px 0 0; padding: 0; color: var(--muted); }
+  .detail li { display: flex; justify-content: space-between; gap: 12px; }
+  .rank { list-style: none; margin: 0; padding: 0; }
+  .rank button { display: grid; grid-template-columns: 8.5em 1fr 3.4em; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; border-radius: 6px; padding: 5px 8px; background: transparent; font-weight: 400; font-size: 13.5px; }
+  .rank button:hover, .rank button.on { background: var(--field); }
+  .rank .track { height: 6px; border-radius: 3px; background: var(--field); overflow: hidden; }
+  .rank button:hover .track, .rank button.on .track { background: var(--line-strong); }
+  .rank .fill { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
+  .rank .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+
+  @media (max-width: 760px) {
+    .musclegrid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stat:nth-child(odd) { border-left: 0; } .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
+    .stat:last-child { grid-column: span 2; }
+    h1 { font-size: 24px; margin-top: 28px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="topbar">
+    <div class="brand">Strong Parser<span>läuft lokal, nichts wird hochgeladen</span></div>
+    <button id="reset" class="link hidden">Andere CSV laden</button>
+  </div>
+
+  <div id="intro">
+    <h1>Strong-Export auswerten</h1>
+    <p class="lead">CSV aus der Strong-App laden und Volumen, Kraftverlauf und Muskelbelastung ansehen. Du kannst die Daten außerdem als Prompt für Claude exportieren.</p>
+    <button id="drop" class="drop" type="button">
+      <strong>CSV hierher ziehen oder auswählen</strong>
+      In Strong: Profil → Einstellungen → Daten exportieren
+    </button>
+    <input id="file" type="file" accept=".csv,text/csv" class="hidden">
+    <p id="err" class="err" role="alert"></p>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="stats" id="stats"></div>
+
+    <section>
+      <div class="head"><div><h2>Wochenvolumen</h2><p>Gewicht × Wiederholungen ohne Warm-ups, letzte 52 Wochen. Die vier jüngsten Wochen sind hervorgehoben.</p></div></div>
+      <div class="chart" id="volChart"></div>
+    </section>
+
+    <section>
+      <div class="head">
+        <div><h2>e1RM-Verlauf</h2><p>Geschätztes Einwiederholungsmaximum (Epley), bester Satz pro Trainingstag.</p></div>
+        <select id="exercise" aria-label="Übung"></select>
+      </div>
+      <div class="chart" id="e1rmChart"></div>
+    </section>
+
+    <section>
+      <div class="head"><div><h2>Export für Claude</h2><p>Kompaktes Markdown aus deinen Daten, das du direkt in einen Chat einfügen kannst.</p></div></div>
+      <div class="opts">
+        <label class="field">Zeitraum
+          <select id="days">
+            <option value="28">letzte 4 Wochen</option>
+            <option value="84" selected>letzte 12 Wochen</option>
+            <option value="182">letzte 6 Monate</option>
+            <option value="365">letztes Jahr</option>
+            <option value="">alles</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" id="summary" checked>Zusammenfassung</label>
+        <label class="check"><input type="checkbox" id="log" checked>Einzelne Workouts</label>
+        <label class="check"><input type="checkbox" id="warmups">Warm-ups</label>
+      </div>
+      <textarea id="out" readonly spellcheck="false" aria-label="Exportierter Text"></textarea>
+      <div class="bar">
+        <button id="copy" class="primary">Kopieren</button>
+        <button id="download">Als .md speichern</button>
+        <span class="muted tabnum" id="size"></span>
+      </div>
+    </section>
+
+    <section>
+      <div class="head">
+        <div>
+          <h2>Muskelbelastung</h2>
+          <p>Gewichtete Arbeitssätze pro Woche. Ein Satz zählt voll für den Hauptmuskel und halb für unterstützende Muskeln.</p>
+        </div>
+        <div class="seg" id="mperiod" role="group" aria-label="Zeitraum">
+          <button type="button" data-days="28" aria-pressed="false">4 Wochen</button>
+          <button type="button" data-days="84" aria-pressed="true">12 Wochen</button>
+          <button type="button" data-days="" aria-pressed="false">Gesamt</button>
+        </div>
+      </div>
+      <div class="musclegrid">
+        <div>
+          <div class="figures" id="figures"></div>
+          <div class="legend">
+            <div class="ramp"><div class="band" id="band"></div></div>
+            <div class="ticks"><span style="left:0">0</span><span style="left:25%">5</span><span style="left:50%">10</span><span style="left:75%">15</span><span style="right:0;transform:none">20+</span></div>
+            <div class="muted" style="text-align:right;margin-top:2px">Sätze pro Woche</div>
+            <p class="muted" style="margin:10px 0 0">Der Rahmen markiert 10–20 Sätze pro Woche, eine gängige Richtgröße für Muskelaufbau.</p>
+          </div>
+        </div>
+        <div>
+          <div class="detail" id="detail"></div>
+          <ul class="rank" id="rank"></ul>
+          <p class="muted" id="unmapped" style="margin:12px 0 0"></p>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script src="strong.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const KEY = "strong_csv";
+const nf = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 0 });
+const nf1 = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+let sets = [];
+
+/* ---------- Laden ---------- */
+function load(csv, persist) {
+  const parsed = Strong.parseStrongCsv(csv);
+  if (!parsed.length) { $("err").textContent = "Keine Sätze gefunden. Ist das der CSV-Export aus Strong?"; return; }
+  sets = parsed;
+  $("err").textContent = "";
+  if (persist) { try { localStorage.setItem(KEY, csv); } catch {} }
+  $("intro").classList.add("hidden"); $("app").classList.remove("hidden"); $("reset").classList.remove("hidden");
+  render();
+}
+
+function render() {
+  const working = sets.filter(Strong.isWorkingSet);
+  const times = sets.map((s) => s.date.getTime());
+  const stat = (v, l) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`;
+  const day = (t) => new Date(t).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  $("stats").innerHTML =
+    stat(nf.format(new Set(times).size), "Workouts") + stat(nf.format(working.length), "Arbeitssätze") +
+    stat(new Set(sets.map((s) => s.exercise)).size, "Übungen") +
+    stat(day(Math.min(...times)), "Erstes Workout") + stat(day(Math.max(...times)), "Letztes Workout");
+
+  $("exercise").innerHTML = Strong.topExercises(sets, 30).map((e) => `<option>${e}</option>`).join("");
+  drawVolume(); drawE1rm(); updateExport(); drawMuscles();
+}
+
+/* ---------- Export ---------- */
+function updateExport() {
+  const text = Strong.formatForAI(sets, {
+    days: $("days").value ? Number($("days").value) : null,
+    summary: $("summary").checked, log: $("log").checked, warmups: $("warmups").checked,
+  });
+  $("out").value = text;
+  $("size").textContent = `${nf.format(text.length)} Zeichen · ca. ${nf.format(text.length / 3.5)} Tokens`;
+}
+
+/* ---------- Tooltip ---------- */
+const tip = $("tip");
+function showTip(html, x, y) {
+  tip.innerHTML = html; tip.classList.add("show");
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = Math.min(Math.max(8, x - w / 2), innerWidth - w - 8) + "px";
+  tip.style.top = Math.max(8, y - h - 12) + "px";
+}
+const hideTip = () => tip.classList.remove("show");
+
+/* ---------- Charts ---------- */
+const weekLabel = (k) => { const [y, w] = k.split("-W"); return `KW ${Number(w)} / ${y}`; };
+
+function drawVolume() {
+  const d = Strong.weeklyVolume(sets).slice(-52);
+  const box = $("volChart");
+  if (!d.length) { box.innerHTML = ""; return; }
+  const W = 900, H = 220, L = 52, B = 26, T = 8, ch = H - B - T;
+  const max = Math.max(...d.map((p) => p.volume), 1), bw = (W - L) / d.length;
+  const grid = [0, .5, 1].map((f) => {
+    const y = T + ch * (1 - f);
+    return `<line class="grid" x1="${L}" x2="${W}" y1="${y}" y2="${y}"/><text x="${L - 8}" y="${y + 4}" text-anchor="end">${nf.format(max * f)}</text>`;
+  }).join("");
+  const bars = d.map((p, i) => {
+    const h = Math.max((p.volume / max) * ch, p.volume ? 1.5 : 0);
+    return `<rect class="bar-r${i >= d.length - 4 ? " recent" : ""}" x="${L + i * bw + 1}" y="${T + ch - h}" width="${Math.max(bw - 2, 1)}" height="${h}" rx="1.5"/>`;
+  }).join("");
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Wochenvolumen in kg">${grid}${bars}
+    <text x="${L}" y="${H - 6}">${weekLabel(d[0].week)}</text><text x="${W}" y="${H - 6}" text-anchor="end">${weekLabel(d[d.length - 1].week)}</text>
+    <rect class="hit" x="${L}" y="0" width="${W - L}" height="${H - B}"/></svg>`;
+  const svg = box.firstChild, rects = [...svg.querySelectorAll(".bar-r")];
+  hover(svg, (px) => {
+    const i = Math.min(d.length - 1, Math.max(0, Math.floor((px - L) / bw)));
+    rects.forEach((r, j) => r.classList.toggle("hot", j === i));
+    const r = rects[i].getBoundingClientRect();
+    showTip(`${weekLabel(d[i].week)}<br><b>${nf.format(d[i].volume)} kg</b> · ${d[i].hardSets} Sätze`, r.left + r.width / 2, r.top);
+  }, () => rects.forEach((r) => r.classList.remove("hot")), W);
+}
+
+function drawE1rm() {
+  const t = Strong.e1rmTrend(sets, $("exercise").value), box = $("e1rmChart");
+  if (t.length < 2) { box.innerHTML = `<p class="muted">Zu wenige Datenpunkte für diese Übung.</p>`; return; }
+  const W = 900, H = 240, L = 52, B = 26, T = 14, R = 56, ch = H - B - T - 6;
+  const ys = t.map((p) => p.e1rm), min = Math.min(...ys), max = Math.max(...ys), span = max - min || 1;
+  const X = (i) => L + (i / (t.length - 1)) * (W - L - R), Y = (v) => T + (1 - (v - min) / span) * ch;
+  const pts = t.map((p, i) => [X(i), Y(p.e1rm)]);
+  const path = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const grid = [0, .5, 1].map((f) => {
+    const y = T + ch * f;
+    return `<line class="grid" x1="${L}" x2="${W - R}" y1="${y}" y2="${y}"/><text x="${L - 8}" y="${y + 4}" text-anchor="end">${nf.format(max - span * f)}</text>`;
+  }).join("");
+  const last = pts[pts.length - 1];
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="e1RM-Verlauf in kg">${grid}
+    <path d="${path}" fill="none" stroke="var(--ink-line)" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+    <line class="guide hidden" id="guide" y1="${T}" y2="${T + ch}"/><circle id="mark" class="hidden" r="4" fill="var(--card)" stroke="var(--ink-line)" stroke-width="2"/>
+    <circle cx="${last[0]}" cy="${last[1]}" r="4.5" fill="var(--accent)"/><text x="${last[0] + 10}" y="${last[1] + 4}" style="fill:var(--text);font-weight:600">${nf1.format(t[t.length - 1].e1rm)}</text>
+    <text x="${L}" y="${H - 6}">${t[0].date}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">${t[t.length - 1].date}</text>
+    <rect class="hit" x="${L}" y="0" width="${W - L - R}" height="${H - B}"/></svg>`;
+  const svg = box.firstChild, guide = svg.querySelector("#guide"), mark = svg.querySelector("#mark");
+  hover(svg, (px) => {
+    const i = Math.round(((px - L) / (W - L - R)) * (t.length - 1)), k = Math.min(t.length - 1, Math.max(0, i));
+    guide.classList.remove("hidden"); mark.classList.remove("hidden");
+    guide.setAttribute("x1", pts[k][0]); guide.setAttribute("x2", pts[k][0]);
+    mark.setAttribute("cx", pts[k][0]); mark.setAttribute("cy", pts[k][1]);
+    const r = mark.getBoundingClientRect();
+    showTip(`${t[k].date}<br><b>${nf1.format(t[k].e1rm)} kg</b>`, r.left + r.width / 2, r.top);
+  }, () => { guide.classList.add("hidden"); mark.classList.add("hidden"); }, W);
+}
+
+// Maus/Touch auf einem SVG → x-Koordinate im viewBox
+function hover(svg, move, leave, W) {
+  const pos = (e) => { const r = svg.getBoundingClientRect(); return ((e.clientX - r.left) / r.width) * W; };
+  svg.addEventListener("pointermove", (e) => move(pos(e)));
+  svg.addEventListener("pointerleave", () => { hideTip(); leave(); });
+}
+
+/* ---------- Muskel-Heatmap ---------- */
+// Linke Körperhälfte (x < 100); die rechte Hälfte wird gespiegelt. Reihenfolge = Zeichenreihenfolge.
+const BODY = {
+  front: {
+    neutral: ["M100 9C88 9 84 20 85 30C86 40 92 45 100 45", "M92 42L100 42L100 56L89 56Z", "M46 198C42 208 42 218 46 226C52 224 57 214 57 203Z",
+              "M100 160L81 162C83 172 91 178 100 182Z", "M79 284L100 286L100 296L81 296Z", "M79 374L92 376C96 386 96 394 90 398L78 396C75 388 76 380 79 374Z"],
+    muscles: [
+      ["traps", "M93 54L71 60C73 64 76 66 77 66L94 62Z"],
+      ["chest", "M100 65L76 66C72 72 71 84 74 92C80 99 92 101 100 97Z"],
+      ["shoulders", "M70 60C58 58 46 64 43 78C41 88 44 98 50 100C54 90 60 82 72 78Z"],
+      ["biceps", "M50 101C44 105 41 114 41 124C41 134 43 142 46 148L58 146C60 134 61 116 58 105Z"],
+      ["forearms", "M46 151C43 165 41 181 40 196L52 200C55 184 58 166 60 151Z"],
+      ["obliques", "M87 102L76 100C73 118 75 142 82 162L87 160Z"],
+      ["abs", "M89 102H100V115H89Z", "M89 117H100V130H89Z", "M89 132H100V145H89Z", "M89 147H100V160H89Z"],
+      ["quads", "M76 178C69 198 68 228 72 256C74 270 80 280 88 284C92 262 93 220 92 182Z"],
+      ["adductors", "M92 182L100 186L100 234C99 256 97 272 94 286L88 284C93 262 94 220 92 182Z"],
+      ["calves", "M81 298C76 314 77 344 82 372L91 374C95 344 96 316 94 298Z"],
+    ],
+  },
+  back: {
+    neutral: ["M100 9C88 9 84 20 85 30C86 40 92 45 100 45", "M92 42L100 42L100 56L89 56Z", "M46 198C42 208 42 218 46 226C52 224 57 214 57 203Z",
+              "M79 284L100 286L100 296L81 296Z", "M79 374L92 376C96 386 96 394 90 398L78 396C75 388 76 380 79 374Z"],
+    muscles: [
+      ["lats", "M76 84C72 100 74 124 84 146L100 152L100 114C90 106 82 96 76 84Z"],
+      ["lowerBack", "M100 124L90 138C90 150 94 160 100 166Z"],
+      ["traps", "M100 50L92 52L71 60L78 72C86 88 94 100 100 112Z"],
+      ["rearDelts", "M70 60C58 58 46 64 43 78C41 88 44 98 50 100C54 90 60 82 72 78Z"],
+      ["triceps", "M50 101C44 105 41 114 41 124C41 134 43 142 46 148L58 146C60 134 61 116 58 105Z"],
+      ["forearms", "M46 151C43 165 41 181 40 196L52 200C55 184 58 166 60 151Z"],
+      ["glutes", "M100 168L80 168C73 180 74 198 84 207C92 209 100 205 100 199Z"],
+      ["hamstrings", "M78 210C71 232 70 258 76 282L92 284C97 262 99 234 100 212C92 214 84 213 78 210Z"],
+      ["calves", "M80 298C74 316 75 342 82 368L92 370C98 342 98 316 94 298Z"],
+    ],
+  },
+};
+const MIRROR = 'transform="translate(200 0) scale(-1 1)"';
+const HEAT_CAP = 20;   // Sätze/Woche, ab hier voll gesättigt
+const mpState = { days: 84, pinned: null, hover: null, load: null };
+
+function heat(perWeek) {
+  const t = Math.min(perWeek / HEAT_CAP, 1);
+  return t < .5
+    ? `color-mix(in oklab, var(--heat-0) ${100 - t * 200}%, var(--heat-1))`
+    : `color-mix(in oklab, var(--heat-1) ${100 - (t - .5) * 200}%, var(--heat-2))`;
+}
+
+function figure(view, title) {
+  const v = BODY[view];
+  const neutral = v.neutral.map((d) => `<path class="neutral" d="${d}"/><path class="neutral" ${MIRROR} d="${d}"/>`).join("");
+  const parts = v.muscles.map(([m, ...ds]) => {
+    const fill = `style="fill:${heat(mpState.load.muscles[m].perWeek)}"`;
+    const half = ds.map((d) => `<path ${fill} d="${d}"/>`).join("");
+    const other = ds.map((d) => `<path ${fill} ${MIRROR} d="${d}"/>`).join("");
+    return `<g class="m" data-m="${m}">${half}${other}</g>`;
+  }).join("");
+  return `<figure class="figure" style="margin:0"><figcaption>${title}</figcaption>
+    <svg viewBox="0 0 200 404" aria-hidden="true">${neutral}${parts}</svg></figure>`;
+}
+
+function drawMuscles() {
+  mpState.load = Strong.muscleLoad(sets, mpState.days);
+  const L = mpState.load;
+  $("figures").innerHTML = figure("front", "Vorne") + figure("back", "Hinten");
+  $("band").style.left = (10 / HEAT_CAP) * 100 + "%"; $("band").style.right = "0";
+
+  const order = Strong.MUSCLES.slice().sort((a, b) => L.muscles[b].perWeek - L.muscles[a].perWeek);
+  $("rank").innerHTML = order.map((m) => {
+    const v = L.muscles[m].perWeek;
+    return `<li><button type="button" data-m="${m}"><span>${Strong.MUSCLE_LABEL[m]}</span>
+      <span class="track"><span class="fill" style="width:${Math.min(v / HEAT_CAP, 1) * 100}%"></span></span>
+      <span class="val">${nf1.format(v)}</span></button></li>`;
+  }).join("");
+  $("unmapped").textContent = L.unmapped.length ? `Nicht zugeordnet: ${L.unmapped.join(", ")}` : "";
+  syncMuscle();
+}
+
+// Hervorhebung + Detailbox. Gepinnt (Klick) hat Vorrang vor Hover.
+function syncMuscle() {
+  const m = mpState.hover ?? mpState.pinned, L = mpState.load;
+  const fig = $("figures");
+  fig.toggleAttribute("data-active", !!m);
+  document.querySelectorAll(".figure .m, .rank button").forEach((el) => el.classList.toggle("on", el.dataset.m === m));
+  if (!m) {
+    $("detail").innerHTML = `<span class="muted">Muskel in der Grafik oder Liste auswählen, um die Übungen dahinter zu sehen.</span>`;
+    return;
+  }
+  const d = L.muscles[m];
+  const rows = d.top.length
+    ? d.top.map((t) => `<li><span>${t.exercise}</span><span class="tabnum">${nf1.format(t.sets)}</span></li>`).join("")
+    : `<li><span>Keine Sätze im Zeitraum</span></li>`;
+  $("detail").innerHTML = `<b>${Strong.MUSCLE_LABEL[m]}</b> <span class="muted tabnum">· ${nf1.format(d.perWeek)} Sätze/Woche · ${nf.format(d.sets)} gesamt</span><ul>${rows}</ul>`;
+}
+
+const target = (e) => e.target.closest("[data-m]")?.dataset.m ?? null;
+for (const id of ["figures", "rank"]) {
+  $(id).addEventListener("pointerover", (e) => { mpState.hover = target(e); syncMuscle(); });
+  $(id).addEventListener("pointerleave", () => { mpState.hover = null; syncMuscle(); });
+  $(id).addEventListener("click", (e) => { const m = target(e); mpState.pinned = m === mpState.pinned ? null : m; syncMuscle(); });
+}
+$("rank").addEventListener("focusin", (e) => { mpState.hover = target(e); syncMuscle(); });
+$("rank").addEventListener("focusout", () => { mpState.hover = null; syncMuscle(); });
+$("mperiod").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  mpState.days = b.dataset.days ? Number(b.dataset.days) : null;
+  $("mperiod").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+  drawMuscles();
+});
+
+/* ---------- Events ---------- */
+const readFile = (f) => f && f.text().then((t) => load(t, true));
+const drop = $("drop");
+drop.addEventListener("click", () => $("file").click());
+$("file").addEventListener("change", (e) => readFile(e.target.files[0]));
+drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); readFile(e.dataTransfer.files[0]); });
+["days", "summary", "log", "warmups"].forEach((id) => $(id).addEventListener("change", updateExport));
+$("exercise").addEventListener("change", drawE1rm);
+
+$("copy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("out").value); }
+  catch { $("out").select(); document.execCommand("copy"); }
+  $("copy").textContent = "Kopiert";
+  setTimeout(() => ($("copy").textContent = "Kopieren"), 1500);
+});
+$("download").addEventListener("click", () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([$("out").value], { type: "text/markdown" }));
+  a.download = "strong-export.md"; a.click();
+});
+$("reset").addEventListener("click", () => {
+  try { localStorage.removeItem(KEY); } catch {}
+  $("app").classList.add("hidden"); $("reset").classList.add("hidden"); $("intro").classList.remove("hidden"); $("file").value = "";
+  mpState.pinned = mpState.hover = null;
+});
+
+try { const saved = localStorage.getItem(KEY); if (saved) load(saved, false); } catch {}
+</script>
+</body>
+</html>

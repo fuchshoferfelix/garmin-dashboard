@@ -6,6 +6,7 @@ import { ActivityCalendar } from "./Calendar";
 import { ExportButtons } from "./ExportButtons";
 import { Heatmap } from "./Heatmap";
 import { Reveal } from "./Reveal";
+import { StrongSection } from "./StrongSection";
 import {
   BodyBatteryChart,
   SeriesLineChart,
@@ -85,6 +86,7 @@ function Nav() {
   const links = [
     ["ueberblick", "Überblick"],
     ["training", "Training"],
+    ["kraft", "Kraft"],
     ["karte", "Karte"],
     ["erholung", "Erholung"],
     ["alltag", "Alltag"],
@@ -200,6 +202,10 @@ function Content({ data, sample }: { data: DashboardData; sample: boolean }) {
             <TrainingLoadChart data={data.trainingWeeks} />
           </ChartCard>
         </div>
+      </Section>
+
+      <Section id="kraft" kicker="Kraft" title="Dein Krafttraining.">
+        <StrongSection />
       </Section>
 
       <Section id="karte" kicker="Karte" title="Alle deine Läufe.">
